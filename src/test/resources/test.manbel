@@ -1,0 +1,4 @@
+imprimir(5 + 3).
+imprimir("Hola mundo").
+entero x : 10.
+imprimir(x).
