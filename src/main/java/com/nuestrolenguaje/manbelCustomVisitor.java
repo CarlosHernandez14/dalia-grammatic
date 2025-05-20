@@ -1,9 +1,13 @@
 package com.nuestrolenguaje;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
+import com.nuestrolenguaje.ResponseClass.TransformedCode;
+import com.nuestrolenguaje.exceptionhandling.CustomErrorListener;
 import com.nuestrolenguaje.manbelParser.AsigContext;
 import com.nuestrolenguaje.manbelParser.BinOpAddSubContext;
 import com.nuestrolenguaje.manbelParser.BinOpLogicalContext;
@@ -17,11 +21,31 @@ import com.nuestrolenguaje.manbelParser.ProgramaContext;
 import com.nuestrolenguaje.manbelParser.StringLiteralContext;
 import com.nuestrolenguaje.manbelParser.UnaryOpNotContext;
 import com.nuestrolenguaje.manbelParser.VariableContext;
+import com.nuestrolenguaje.utils.CodeGenResult;
 
 public class manbelCustomVisitor extends manbelBaseVisitor<Object> {
 
     private final Map<String, TypeSystem> symbolTypes = new HashMap<>();
     private final Map<String, Object> symbolValues = new HashMap<>();
+
+    private List<TransformedCode> transformedCodeList = new ArrayList<>();
+    
+    // Para manejar errores semanticos
+    private CustomErrorListener errorListener;
+
+    private StringBuilder output = new StringBuilder();
+
+    public void setErrorListener(CustomErrorListener errorListener) {
+        this.errorListener = errorListener;
+    }
+
+    public String getOutput() {
+        return output.toString();
+    }
+
+    public List<TransformedCode> getTransformedCodeList() {
+        return transformedCodeList;
+    }
 
     @Override
     public Object visitPrograma(ProgramaContext ctx) {
@@ -30,7 +54,8 @@ public class manbelCustomVisitor extends manbelBaseVisitor<Object> {
             try {
                 visit(instr);
             } catch (Exception e) {
-                System.err.println("ERROR en línea " + instr.getStart().getLine() + ": " + e.getMessage());
+                // Acumula el mensaje de error en lugar de imprimirlo en stderr
+                errorListener.addSemanticError(e.getMessage(), instr.getStart().getLine(), instr.getStart().getCharPositionInLine());
                 throw e;
             }
         }
@@ -166,9 +191,11 @@ public class manbelCustomVisitor extends manbelBaseVisitor<Object> {
     }
 
     @Override
-    public Object visitPrint(manbelParser.PrintContext ctx) {
+    public CodeGenResult visitPrint(manbelParser.PrintContext ctx) {
         Object value = visit(ctx.expr());
-        System.out.println(value);
+        // Agrega al StringBuilder en lugar de imprimir
+        output.append(value)                
+            .append(System.lineSeparator());  // salto de línea
         return null;
     }
 

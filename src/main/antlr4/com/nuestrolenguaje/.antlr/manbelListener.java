@@ -1,4 +1,4 @@
-// Generated from c:/Users/infan/OneDrive/Documentos/DOCUMENTOS TECNOLOGICO/Lenguajes y Automatas 2/nuestrolenguaje/src/main/antlr4/com/nuestrolenguaje/manbel.g4 by ANTLR 4.13.1
+// Generated from c:/Users/carlo/Documents/Antlr/dalia-grammatic/src/main/antlr4/com/nuestrolenguaje/manbel.g4 by ANTLR 4.13.1
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 /**
@@ -87,53 +87,143 @@ public interface manbelListener extends ParseTreeListener {
 	 */
 	void exitCiclo(manbelParser.CicloContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link manbelParser#condicion}.
+	 * Enter a parse tree produced by {@link manbelParser#bloque}.
 	 * @param ctx the parse tree
 	 */
-	void enterCondicion(manbelParser.CondicionContext ctx);
+	void enterBloque(manbelParser.BloqueContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link manbelParser#condicion}.
+	 * Exit a parse tree produced by {@link manbelParser#bloque}.
 	 * @param ctx the parse tree
 	 */
-	void exitCondicion(manbelParser.CondicionContext ctx);
+	void exitBloque(manbelParser.BloqueContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link manbelParser#expr}.
+	 * Enter a parse tree produced by {@link manbelParser#print}.
 	 * @param ctx the parse tree
 	 */
-	void enterExpr(manbelParser.ExprContext ctx);
+	void enterPrint(manbelParser.PrintContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link manbelParser#expr}.
+	 * Exit a parse tree produced by {@link manbelParser#print}.
 	 * @param ctx the parse tree
 	 */
-	void exitExpr(manbelParser.ExprContext ctx);
+	void exitPrint(manbelParser.PrintContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link manbelParser#incremento}.
+	 * Enter a parse tree produced by the {@code Numero}
+	 * labeled alternative in {@link manbelParser#expr}.
 	 * @param ctx the parse tree
 	 */
-	void enterIncremento(manbelParser.IncrementoContext ctx);
+	void enterNumero(manbelParser.NumeroContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link manbelParser#incremento}.
+	 * Exit a parse tree produced by the {@code Numero}
+	 * labeled alternative in {@link manbelParser#expr}.
 	 * @param ctx the parse tree
 	 */
-	void exitIncremento(manbelParser.IncrementoContext ctx);
+	void exitNumero(manbelParser.NumeroContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link manbelParser#termino}.
+	 * Enter a parse tree produced by the {@code BinOpComp}
+	 * labeled alternative in {@link manbelParser#expr}.
 	 * @param ctx the parse tree
 	 */
-	void enterTermino(manbelParser.TerminoContext ctx);
+	void enterBinOpComp(manbelParser.BinOpCompContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link manbelParser#termino}.
+	 * Exit a parse tree produced by the {@code BinOpComp}
+	 * labeled alternative in {@link manbelParser#expr}.
 	 * @param ctx the parse tree
 	 */
-	void exitTermino(manbelParser.TerminoContext ctx);
+	void exitBinOpComp(manbelParser.BinOpCompContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link manbelParser#factor}.
+	 * Enter a parse tree produced by the {@code Variable}
+	 * labeled alternative in {@link manbelParser#expr}.
 	 * @param ctx the parse tree
 	 */
-	void enterFactor(manbelParser.FactorContext ctx);
+	void enterVariable(manbelParser.VariableContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link manbelParser#factor}.
+	 * Exit a parse tree produced by the {@code Variable}
+	 * labeled alternative in {@link manbelParser#expr}.
 	 * @param ctx the parse tree
 	 */
-	void exitFactor(manbelParser.FactorContext ctx);
+	void exitVariable(manbelParser.VariableContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code StringLiteral}
+	 * labeled alternative in {@link manbelParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterStringLiteral(manbelParser.StringLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code StringLiteral}
+	 * labeled alternative in {@link manbelParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitStringLiteral(manbelParser.StringLiteralContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code Parens}
+	 * labeled alternative in {@link manbelParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterParens(manbelParser.ParensContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code Parens}
+	 * labeled alternative in {@link manbelParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitParens(manbelParser.ParensContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code BooleanLiteral}
+	 * labeled alternative in {@link manbelParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterBooleanLiteral(manbelParser.BooleanLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code BooleanLiteral}
+	 * labeled alternative in {@link manbelParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitBooleanLiteral(manbelParser.BooleanLiteralContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code UnaryOpNot}
+	 * labeled alternative in {@link manbelParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterUnaryOpNot(manbelParser.UnaryOpNotContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code UnaryOpNot}
+	 * labeled alternative in {@link manbelParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitUnaryOpNot(manbelParser.UnaryOpNotContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code BinOpAddSub}
+	 * labeled alternative in {@link manbelParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterBinOpAddSub(manbelParser.BinOpAddSubContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code BinOpAddSub}
+	 * labeled alternative in {@link manbelParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitBinOpAddSub(manbelParser.BinOpAddSubContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code BinOpLogical}
+	 * labeled alternative in {@link manbelParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterBinOpLogical(manbelParser.BinOpLogicalContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code BinOpLogical}
+	 * labeled alternative in {@link manbelParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitBinOpLogical(manbelParser.BinOpLogicalContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code BinOpMulDiv}
+	 * labeled alternative in {@link manbelParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterBinOpMulDiv(manbelParser.BinOpMulDivContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code BinOpMulDiv}
+	 * labeled alternative in {@link manbelParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitBinOpMulDiv(manbelParser.BinOpMulDivContext ctx);
 }

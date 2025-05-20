@@ -1,4 +1,4 @@
-// Generated from c:/Users/infan/Downloads/nuestrolenguaje/src/main/antlr4/com/nuestrolenguaje/manbel.g4 by ANTLR 4.13.1
+// Generated from c:/Users/carlo/Documents/Antlr/dalia-grammatic/src/main/antlr4/com/nuestrolenguaje/manbel.g4 by ANTLR 4.13.1
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
