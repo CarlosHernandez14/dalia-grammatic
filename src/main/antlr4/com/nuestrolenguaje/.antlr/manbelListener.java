@@ -1,4 +1,4 @@
-// Generated from c:/Users/carlo/Documents/Antlr/dalia-grammatic/src/main/antlr4/com/nuestrolenguaje/manbel.g4 by ANTLR 4.13.1
+// Generated from c:/Users/carlo/Documents/AntlrProjects/dalia-grammatic/src/main/antlr4/com/nuestrolenguaje/manbel.g4 by ANTLR 4.13.1
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 /**

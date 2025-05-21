@@ -1,4 +1,4 @@
-// Generated from c:/Users/carlo/Documents/Antlr/dalia-grammatic/src/main/antlr4/com/nuestrolenguaje/manbel.g4 by ANTLR 4.13.1
+// Generated from c:/Users/carlo/Documents/AntlrProjects/dalia-grammatic/src/main/antlr4/com/nuestrolenguaje/manbel.g4 by ANTLR 4.13.1
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;
@@ -114,6 +114,14 @@ public class manbelParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_programa; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterPrograma(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitPrograma(this);
+		}
 	}
 
 	public final ProgramaContext programa() throws RecognitionException {
@@ -173,6 +181,14 @@ public class manbelParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_instruccion; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterInstruccion(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitInstruccion(this);
+		}
 	}
 
 	public final InstruccionContext instruccion() throws RecognitionException {
@@ -244,6 +260,14 @@ public class manbelParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_asig; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterAsig(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitAsig(this);
+		}
 	}
 
 	public final AsigContext asig() throws RecognitionException {
@@ -290,6 +314,14 @@ public class manbelParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_declaracionVariable; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterDeclaracionVariable(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitDeclaracionVariable(this);
+		}
 	}
 
 	public final DeclaracionVariableContext declaracionVariable() throws RecognitionException {
@@ -368,6 +400,14 @@ public class manbelParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_tipo; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterTipo(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitTipo(this);
+		}
 	}
 
 	public final TipoContext tipo() throws RecognitionException {
@@ -412,6 +452,14 @@ public class manbelParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_def; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterDef(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitDef(this);
+		}
 	}
 
 	public final DefContext def() throws RecognitionException {
@@ -467,6 +515,14 @@ public class manbelParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_condicional; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterCondicional(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitCondicional(this);
+		}
 	}
 
 	public final CondicionalContext condicional() throws RecognitionException {
@@ -529,6 +585,14 @@ public class manbelParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_ciclo; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterCiclo(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitCiclo(this);
+		}
 	}
 
 	public final CicloContext ciclo() throws RecognitionException {
@@ -580,6 +644,14 @@ public class manbelParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_bloque; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterBloque(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitBloque(this);
+		}
 	}
 
 	public final BloqueContext bloque() throws RecognitionException {
@@ -657,6 +729,14 @@ public class manbelParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_print; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterPrint(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitPrint(this);
+		}
 	}
 
 	public final PrintContext print() throws RecognitionException {
@@ -704,6 +784,14 @@ public class manbelParser extends Parser {
 	public static class NumeroContext extends ExprContext {
 		public TerminalNode NUM() { return getToken(manbelParser.NUM, 0); }
 		public NumeroContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterNumero(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitNumero(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class BinOpCompContext extends ExprContext {
@@ -715,16 +803,40 @@ public class manbelParser extends Parser {
 			return getRuleContext(ExprContext.class,i);
 		}
 		public BinOpCompContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterBinOpComp(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitBinOpComp(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class VariableContext extends ExprContext {
 		public TerminalNode ID() { return getToken(manbelParser.ID, 0); }
 		public VariableContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterVariable(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitVariable(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class StringLiteralContext extends ExprContext {
 		public TerminalNode STRING_LITERAL() { return getToken(manbelParser.STRING_LITERAL, 0); }
 		public StringLiteralContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterStringLiteral(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitStringLiteral(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class ParensContext extends ExprContext {
@@ -732,11 +844,27 @@ public class manbelParser extends Parser {
 			return getRuleContext(ExprContext.class,0);
 		}
 		public ParensContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterParens(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitParens(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class BooleanLiteralContext extends ExprContext {
 		public TerminalNode BOOLEAN_LITERAL() { return getToken(manbelParser.BOOLEAN_LITERAL, 0); }
 		public BooleanLiteralContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterBooleanLiteral(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitBooleanLiteral(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class UnaryOpNotContext extends ExprContext {
@@ -745,6 +873,14 @@ public class manbelParser extends Parser {
 			return getRuleContext(ExprContext.class,0);
 		}
 		public UnaryOpNotContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterUnaryOpNot(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitUnaryOpNot(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class BinOpAddSubContext extends ExprContext {
@@ -756,6 +892,14 @@ public class manbelParser extends Parser {
 			return getRuleContext(ExprContext.class,i);
 		}
 		public BinOpAddSubContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterBinOpAddSub(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitBinOpAddSub(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class BinOpLogicalContext extends ExprContext {
@@ -769,6 +913,14 @@ public class manbelParser extends Parser {
 		public TerminalNode AND() { return getToken(manbelParser.AND, 0); }
 		public TerminalNode OR() { return getToken(manbelParser.OR, 0); }
 		public BinOpLogicalContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterBinOpLogical(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitBinOpLogical(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class BinOpMulDivContext extends ExprContext {
@@ -780,6 +932,14 @@ public class manbelParser extends Parser {
 			return getRuleContext(ExprContext.class,i);
 		}
 		public BinOpMulDivContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).enterBinOpMulDiv(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof manbelListener ) ((manbelListener)listener).exitBinOpMulDiv(this);
+		}
 	}
 
 	public final ExprContext expr() throws RecognitionException {

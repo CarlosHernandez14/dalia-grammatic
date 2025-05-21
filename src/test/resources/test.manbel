@@ -1,4 +1,22 @@
-imprimir(5 + 3).
-imprimir("Hola mundo").
-flotante x : 10.5.
+flotante i: 0, n: 5.0.
+flotante x.
+boleano flag: verdadero.
+cadena msg: "Contando:".
+
+imprimir(msg).
+
+para(i: 0 . i < n . i: i + 1) {
+    // En cada iteración, imprimir i
+    imprimir(i).
+}
+
+si(flag) {
+    imprimir("El contador final es").
+    imprimir(i).
+} sino {
+    imprimir("El flag está en falso").
+}
+
+x: 3.14.
+x: x * 2.
 imprimir(x).

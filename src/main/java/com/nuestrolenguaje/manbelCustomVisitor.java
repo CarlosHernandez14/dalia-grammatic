@@ -1,6 +1,7 @@
 package com.nuestrolenguaje;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -10,9 +11,12 @@ import com.nuestrolenguaje.ResponseClass.TransformedCode;
 import com.nuestrolenguaje.exceptionhandling.CustomErrorListener;
 import com.nuestrolenguaje.manbelParser.AsigContext;
 import com.nuestrolenguaje.manbelParser.BinOpAddSubContext;
+import com.nuestrolenguaje.manbelParser.BinOpCompContext;
 import com.nuestrolenguaje.manbelParser.BinOpLogicalContext;
 import com.nuestrolenguaje.manbelParser.BinOpMulDivContext;
 import com.nuestrolenguaje.manbelParser.BooleanLiteralContext;
+import com.nuestrolenguaje.manbelParser.CicloContext;
+import com.nuestrolenguaje.manbelParser.CondicionalContext;
 import com.nuestrolenguaje.manbelParser.DeclaracionVariableContext;
 import com.nuestrolenguaje.manbelParser.ExprContext;
 import com.nuestrolenguaje.manbelParser.InstruccionContext;
@@ -36,6 +40,11 @@ public class manbelCustomVisitor extends manbelBaseVisitor<Object> {
     private CustomErrorListener errorListener;
 
     private StringBuilder output = new StringBuilder();
+
+    private int indentLevel = 0;
+    private String indent() {
+        return "    ".repeat(indentLevel);
+    }
 
     public void setErrorListener(CustomErrorListener errorListener) {
         this.errorListener = errorListener;
@@ -164,6 +173,134 @@ public class manbelCustomVisitor extends manbelBaseVisitor<Object> {
     }
 
     @Override
+    public Object visitCondicional(CondicionalContext ctx) {
+        // Generación de la condición
+        CodeGenResult cond = CodeGenHelper.gen(ctx.expr());
+
+        // Cuerpo 'si'
+        indentLevel++;
+        List<InstruccionContext> siCuerpo = ctx.bloque(0).instruccion().isEmpty()
+            ? List.of(ctx.bloque(0).instruccion(0))
+            : ctx.bloque(0).instruccion();
+
+        StringBuilder bodySiPy = new StringBuilder(), bodySiJs = new StringBuilder();
+        for (InstruccionContext instr : siCuerpo) {
+            visit(instr);
+            TransformedCode last = transformedCodeList.remove(transformedCodeList.size()-1);
+            bodySiPy.append(indent()).append("    ").append(last.getPythonCode()).append("\n");
+            bodySiJs.append(indent()).append("    ").append(last.getJavaScriptCode()).append("\n");
+        }
+        indentLevel--;
+
+        String pyIf = indent() + "if " + cond.py + ":\n" + bodySiPy.toString();
+        String jsIf = indent() + "if (" + cond.js + ") {\n" + bodySiJs.toString() + indent() + "}\n";
+
+        // 'else' opcional
+        if (ctx.SINO() != null) {
+            indentLevel++;
+            List<InstruccionContext> sinoCuerpo = ctx.bloque(1).instruccion().isEmpty()
+                ? List.of(ctx.bloque(1).instruccion(0))
+                : ctx.bloque(1).instruccion();
+
+            StringBuilder bodySinoPy = new StringBuilder(), bodySinoJs = new StringBuilder();
+            for (InstruccionContext instr : sinoCuerpo) {
+                visit(instr);
+                TransformedCode last = transformedCodeList.remove(transformedCodeList.size()-1);
+                bodySinoPy.append(indent()).append("    ").append(last.getPythonCode()).append("\n");
+                bodySinoJs.append(indent()).append("    ").append(last.getJavaScriptCode()).append("\n");
+            }
+            indentLevel--;
+            pyIf  += indent() + "else:\n" + bodySinoPy.toString();
+            jsIf  += indent() + "else {\n" + bodySinoJs.toString() + indent() + "}\n";
+        }
+
+        transformedCodeList.add(new TransformedCode(pyIf, jsIf));
+        return null;
+    }
+
+    @Override
+    public Object visitCiclo(CicloContext ctx) {
+        // 1) SEMÁNTICA: simulamos for(inicial; cond; update) como while
+
+        // inicialización: primera asignación
+        visit(ctx.asig(0));
+
+        // condición inicial
+        Boolean condicion = (Boolean) visit(ctx.expr());
+
+        // cuerpo: detectamos si hay llaves o no
+        List<InstruccionContext> cuerpo;
+        if (!ctx.bloque().instruccion().isEmpty()) {
+            cuerpo = ctx.bloque().instruccion();
+        } else {
+            // alternativa sin llaves
+            cuerpo = List.of(ctx.bloque().instruccion(0));
+        }
+
+        // ejecutamos la semántica tantas veces como sea true
+        while (condicion) {
+            for (InstruccionContext instr : cuerpo) {
+                visit(instr);
+            }
+            // actualización: segunda asignación
+            visit(ctx.asig(1));
+            // re-evaluar condición
+            condicion = (Boolean) visit(ctx.expr());
+        }
+
+        // 2) CODEGEN: recogemos init y update que acabamos de emitir
+        TransformedCode update = transformedCodeList.remove(transformedCodeList.size() - 1);
+        TransformedCode init   = transformedCodeList.remove(transformedCodeList.size() - 1);
+
+        // generamos de nuevo la condición para codegen
+        CodeGenResult condCg = CodeGenHelper.gen(ctx.expr());
+
+        // reconstruimos el cuerpo traducido (lo que agregaron los visit(instr))
+        List<TransformedCode> cuerpoTrans = new ArrayList<>();
+        for (int i = 0; i < cuerpo.size(); i++) {
+            // sacamos de atrás hacia adelante
+            cuerpoTrans.add(transformedCodeList.remove(transformedCodeList.size() - 1));
+        }
+        Collections.reverse(cuerpoTrans);
+
+        // construimos el bloque Python indentado
+        StringBuilder bodyPy = new StringBuilder();
+        for (TransformedCode tc : cuerpoTrans) {
+            bodyPy.append(indent()).append("    ")
+                .append(tc.getPythonCode())
+                .append("\n");
+        }
+
+        // construimos el bloque JS indentado
+        StringBuilder bodyJs = new StringBuilder();
+        for (TransformedCode tc : cuerpoTrans) {
+            bodyJs.append(indent()).append("    ")
+                .append(tc.getJavaScriptCode())
+                .append("\n");
+        }
+
+        // ensamblamos el bucle Python: init + while + cuerpo + update
+        String py =
+            init.getPythonCode() + "\n" +
+            indent() + "while " + condCg.py + ":\n" +
+            bodyPy.toString() +
+            indent() + update.getPythonCode();
+
+        // ensamblamos el for de JS: for(init; cond; update) { cuerpo }
+        String initJsClean   = init.getJavaScriptCode().replaceFirst("^let ", "");
+        String updateJsClean = update.getJavaScriptCode().replaceFirst("^let ", "");
+        String js =
+            indent() +
+            "for(" + initJsClean + "; " + condCg.js + "; " + updateJsClean + ") {\n" +
+            bodyJs.toString() +
+            indent() + "}";
+
+        // finalmente emitimos la traducción completa del ciclo
+        transformedCodeList.add(new TransformedCode(py, js));
+        return null;
+    }
+
+    @Override
     public Object visitBinOpMulDiv(BinOpMulDivContext ctx) {
         // semántica
         Object left = visit(ctx.expr(0));
@@ -173,6 +310,13 @@ public class manbelCustomVisitor extends manbelBaseVisitor<Object> {
         CodeGenResult l = CodeGenHelper.gen(ctx.expr(0));
         CodeGenResult r = CodeGenHelper.gen(ctx.expr(1));
         String op = ctx.op.getText();
+
+        transformedCodeList.add(
+            new CodeGenResult(
+                l.py + " " + op + " " + r.py,
+                l.js + " " + op + " " + r.js
+            ).toTransformed()
+        );
         
         return result;
     }
@@ -182,10 +326,18 @@ public class manbelCustomVisitor extends manbelBaseVisitor<Object> {
         Object left = visit(ctx.expr(0));
         Object right = visit(ctx.expr(1));
         Object result = handleBinaryOperation(left, right, ctx.op.getText());
+        
 
         CodeGenResult l = CodeGenHelper.gen(ctx.expr(0));
         CodeGenResult r = CodeGenHelper.gen(ctx.expr(1));
         String op = ctx.op.getText();
+
+        transformedCodeList.add(
+            new CodeGenResult(
+                l.py + " " + op + " " + r.py,
+                l.js + " " + op + " " + r.js
+            ).toTransformed()
+        );
         
         return result;
     }
@@ -207,7 +359,33 @@ public class manbelCustomVisitor extends manbelBaseVisitor<Object> {
         CodeGenResult l = CodeGenHelper.gen(ctx.expr(0));
         CodeGenResult r = CodeGenHelper.gen(ctx.expr(1));
         String pyOp = op;
+
+        transformedCodeList.add(
+            new CodeGenResult(
+                l.py + " " + op + " " + r.py,
+                l.js + " " + op + " " + r.js
+            ).toTransformed()
+        );
         
+        return result;
+    }
+
+    @Override
+    public Object visitBinOpComp(BinOpCompContext ctx) {
+        Object left  = visit(ctx.expr(0));
+        Object right = visit(ctx.expr(1));
+        Object result= handleBinaryOperation(left, right, ctx.op.getText());
+
+        CodeGenResult l = CodeGenHelper.gen(ctx.expr(0));
+        CodeGenResult r = CodeGenHelper.gen(ctx.expr(1));
+        String op = ctx.op.getText();
+
+        // Emitimos el código traducido:
+        transformedCodeList.add(new CodeGenResult(
+            l.py + " " + op + " " + r.py,
+            l.js + " " + op + " " + r.js
+        ).toTransformed());
+
         return result;
     }
 
@@ -244,9 +422,7 @@ public class manbelCustomVisitor extends manbelBaseVisitor<Object> {
     public Object visitStringLiteral(StringLiteralContext ctx) {
         String lit = ctx.STRING_LITERAL().getText();
         String val = lit.substring(1, lit.length()-1);
-        transformedCodeList.add(
-            new TransformedCode(lit, lit)
-        );
+
         return val;
     }
 
@@ -256,9 +432,7 @@ public class manbelCustomVisitor extends manbelBaseVisitor<Object> {
         boolean val = "verdadero".equals(lit);
         String py = val ? "True" : "False";
         String js = val ? "true" : "false";
-        transformedCodeList.add(
-            new TransformedCode(py, js)
-        );
+      
         return val;
     }
 
