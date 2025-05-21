@@ -17,6 +17,8 @@ import com.nuestrolenguaje.manbelParser.DeclaracionVariableContext;
 import com.nuestrolenguaje.manbelParser.ExprContext;
 import com.nuestrolenguaje.manbelParser.InstruccionContext;
 import com.nuestrolenguaje.manbelParser.NumeroContext;
+import com.nuestrolenguaje.manbelParser.ParensContext;
+import com.nuestrolenguaje.manbelParser.PrintContext;
 import com.nuestrolenguaje.manbelParser.ProgramaContext;
 import com.nuestrolenguaje.manbelParser.StringLiteralContext;
 import com.nuestrolenguaje.manbelParser.UnaryOpNotContext;
@@ -56,7 +58,6 @@ public class manbelCustomVisitor extends manbelBaseVisitor<Object> {
             } catch (Exception e) {
                 // Acumula el mensaje de error en lugar de imprimirlo en stderr
                 errorListener.addSemanticError(e.getMessage(), instr.getStart().getLine(), instr.getStart().getCharPositionInLine());
-                throw e;
             }
         }
         return null;
@@ -64,151 +65,251 @@ public class manbelCustomVisitor extends manbelBaseVisitor<Object> {
 
     @Override
     public Object visitDeclaracionVariable(DeclaracionVariableContext ctx) {
-        TypeSystem varType = TypeSystem.fromString(ctx.tipo().getText());
-        
+        StringBuilder py = new StringBuilder();
+        StringBuilder js = new StringBuilder();
+
         for (int i = 0; i < ctx.ID().size(); i++) {
-            String varName = ctx.ID(i).getText();
-            
-            if (ctx.expr(i) != null) {
-                Object value = visit(ctx.expr(i));
-                TypeSystem valueType = TypeSystem.getTypeFromValue(value);
-                
-                if (varType != valueType) {  // Validación estricta
-                    throw new RuntimeException(String.format(
-                        "Tipo incorrecto para '%s': esperaba %s, obtuvo %s",
-                        varName, varType, valueType));
+            String name = ctx.ID(i).getText();
+            Object value;
+            String initPy, initJs;
+
+            try {
+                if (ctx.expr(i) != null) {
+                    value    = visit(ctx.expr(i));
+                    initPy   = CodeGenHelper.gen(ctx.expr(i)).py;
+                    initJs   = CodeGenHelper.gen(ctx.expr(i)).js;
+                    TypeSystem vt = TypeSystem.getTypeFromValue(value);
+                    TypeSystem declared = TypeSystem.fromString(ctx.tipo().getText());
+                    if (vt != declared) {
+                        throw new RuntimeException(
+                            String.format("Tipo incorrecto para '%s': esperaba %s, obtuvo %s",
+                                        name, declared, vt));
+                    }
+                } else {
+                    TypeSystem declared = TypeSystem.fromString(ctx.tipo().getText());
+                    value  = getDefaultValue(declared);
+                    initPy = CodeGenHelper.defaultValuePy(declared);
+                    initJs = CodeGenHelper.defaultValueJs(declared);
                 }
-                
-                symbolValues.put(varName, value);
-            } else {
-                symbolValues.put(varName, getDefaultValue(varType));
+                symbolTypes.put(name, TypeSystem.fromString(ctx.tipo().getText()));
+                symbolValues.put(name, value);
+            } catch (RuntimeException e) {
+                errorListener.addSemanticError(
+                    e.getMessage(),
+                    ctx.getStart().getLine(),
+                    ctx.getStart().getCharPositionInLine()
+                );
+                // para seguir, asigna default
+                TypeSystem declared = TypeSystem.fromString(ctx.tipo().getText());
+                value  = getDefaultValue(declared);
+                initPy = CodeGenHelper.defaultValuePy(declared);
+                initJs = CodeGenHelper.defaultValueJs(declared);
+                symbolTypes.put(name, declared);
+                symbolValues.put(name, value);
             }
-            symbolTypes.put(varName, varType);
+
+            // Concatena múltiples variables separadas por coma:
+            if (i > 0) {
+                py.append("\n");
+                js.append("\n");
+            }
+            py.append(name).append(" = ").append(initPy);
+            js.append("let ").append(name).append(" = ").append(initJs).append(";");
         }
+
+        // Al final, emite UNA entrada:
+        transformedCodeList.add(new TransformedCode(py.toString(), js.toString()));
         return null;
     }
 
     @Override
     public Object visitAsig(AsigContext ctx) {
-        String varName = ctx.ID().getText();
-        
-        if (!symbolTypes.containsKey(varName)) {
-            throw new RuntimeException("Variable '" + varName + "' no declarada");
+        String name = ctx.ID().getText();
+        Object value;
+        String exprPy, exprJs;
+
+        try {
+            if (!symbolTypes.containsKey(name)) {
+                throw new RuntimeException("Variable '" + name + "' no declarada");
+            }
+            value    = visit(ctx.expr());
+            exprPy   = CodeGenHelper.gen(ctx.expr()).py;
+            exprJs   = CodeGenHelper.gen(ctx.expr()).js;
+            TypeSystem declared = symbolTypes.get(name);
+            TypeSystem vt = TypeSystem.getTypeFromValue(value);
+            if (!TypeSystem.isCompatible(declared, vt)) {
+                throw new RuntimeException(
+                    String.format("Tipo incompatible para '%s': esperaba %s, obtuvo %s",
+                                name, declared, vt));
+            }
+        } catch (RuntimeException e) {
+            errorListener.addSemanticError(
+                e.getMessage(),
+                ctx.getStart().getLine(),
+                ctx.getStart().getCharPositionInLine()
+            );
+            // valor neutro para seguir
+            TypeSystem declared = symbolTypes.getOrDefault(name, TypeSystem.ENTERO);
+            value  = getDefaultValue(declared);
+            exprPy = CodeGenHelper.defaultValuePy(declared);
+            exprJs = CodeGenHelper.defaultValueJs(declared);
         }
-        
-        Object value = visit(ctx.expr());
-        TypeSystem valueType = TypeSystem.getTypeFromValue(value);
-        TypeSystem varType = symbolTypes.get(varName);
-        
-        if (!TypeSystem.isCompatible(varType, valueType)) {
-            throw new RuntimeException("Tipo incompatible para " + varName + 
-                   ": no se puede asignar " + valueType + " a " + varType);
-        }
-        
-        if (varType == TypeSystem.FLOTANTE && valueType == TypeSystem.ENTERO) {
-            value = ((Integer)value).floatValue();
-        }
-        
-        symbolValues.put(varName, value);
+
+        symbolValues.put(name, value);
+        transformedCodeList.add(new TransformedCode(
+            name + " = " + exprPy,
+            name + " = " + exprJs + ";"
+        ));
         return value;
     }
 
     @Override
     public Object visitBinOpMulDiv(BinOpMulDivContext ctx) {
-        return handleBinaryOperation(ctx.expr(0), ctx.expr(1), ctx.op.getText());
+        // semántica
+        Object left = visit(ctx.expr(0));
+        Object right = visit(ctx.expr(1));
+        Object result = handleBinaryOperation(left, right, ctx.op.getText());
+        // codegen
+        CodeGenResult l = CodeGenHelper.gen(ctx.expr(0));
+        CodeGenResult r = CodeGenHelper.gen(ctx.expr(1));
+        String op = ctx.op.getText();
+        
+        return result;
     }
 
     @Override
     public Object visitBinOpAddSub(BinOpAddSubContext ctx) {
-        return handleBinaryOperation(ctx.expr(0), ctx.expr(1), ctx.op.getText());
+        Object left = visit(ctx.expr(0));
+        Object right = visit(ctx.expr(1));
+        Object result = handleBinaryOperation(left, right, ctx.op.getText());
+
+        CodeGenResult l = CodeGenHelper.gen(ctx.expr(0));
+        CodeGenResult r = CodeGenHelper.gen(ctx.expr(1));
+        String op = ctx.op.getText();
+        
+        return result;
     }
 
     @Override
     public Object visitBinOpLogical(BinOpLogicalContext ctx) {
         Object left = visit(ctx.expr(0));
         Object right = visit(ctx.expr(1));
-
         if (!(left instanceof Boolean) || !(right instanceof Boolean)) {
-            throw new RuntimeException("Operadores lógicos requieren valores booleanos");
+            throw new RuntimeException("Operadores lógicos requieren booleanos");
         }
+        boolean lb = (Boolean) left;
+        boolean rb = (Boolean) right;
+        String op = ctx.op.getText();
+        boolean result;
+        if ("and".equals(op)) result = lb && rb;
+        else result = lb || rb;
 
-        boolean leftBool = (Boolean) left;
-        boolean rightBool = (Boolean) right;
-
-        switch (ctx.op.getText()) {
-            case "and":
-                return leftBool && rightBool;
-            case "or":
-                return leftBool || rightBool;
-            default:
-                throw new RuntimeException("Operador lógico desconocido: " + ctx.op.getText());
-        }
+        CodeGenResult l = CodeGenHelper.gen(ctx.expr(0));
+        CodeGenResult r = CodeGenHelper.gen(ctx.expr(1));
+        String pyOp = op;
+        
+        return result;
     }
 
-    private Object handleBinaryOperation(ExprContext leftCtx, ExprContext rightCtx, String op) {
-        Object left = visit(leftCtx);
-        Object right = visit(rightCtx);
-        TypeSystem leftType = TypeSystem.getTypeFromValue(left);
-        TypeSystem rightType = TypeSystem.getTypeFromValue(right);
-        
-        if (!TypeSystem.canOperate(leftType, rightType, op)) {
-            throw new RuntimeException(String.format(
-                "Operación inválida: %s %s %s (tipos no compatibles)",
-                leftType, op, rightType));
+    private Object handleBinaryOperation(Object left, Object right, String op) {
+        TypeSystem lt = TypeSystem.getTypeFromValue(left);
+        TypeSystem rt = TypeSystem.getTypeFromValue(right);
+        if (!TypeSystem.canOperate(lt, rt, op)) {
+            throw new RuntimeException(
+                String.format("Operación inválida: %s %s %s", lt, op, rt)
+            );
         }
-        
         return TypeSystem.performOperation(op, left, right);
     }
 
     @Override
     public Object visitVariable(VariableContext ctx) {
-        String varName = ctx.ID().getText();
-        if (!symbolValues.containsKey(varName)) {
-            throw new RuntimeException("Variable '" + varName + "' no existe");
+        String name = ctx.ID().getText();
+        if (!symbolValues.containsKey(name)) {
+            throw new RuntimeException("Variable '" + name + "' no existe");
         }
-        Object value = symbolValues.get(varName);
+        Object value = symbolValues.get(name);
+        
         return value;
     }
 
     @Override
     public Object visitNumero(NumeroContext ctx) {
-        String numText = ctx.NUM().getText();
-        if (numText.contains(".")) {
-            return Float.parseFloat(numText);
-        }
-        return Integer.parseInt(numText);
+        String t = ctx.NUM().getText();
+        Object num = t.contains(".") ? Float.parseFloat(t) : Integer.parseInt(t);
+        return num;
     }
 
     @Override
     public Object visitStringLiteral(StringLiteralContext ctx) {
-        return ctx.STRING_LITERAL().getText().replaceAll("^\"|\"$", "");
+        String lit = ctx.STRING_LITERAL().getText();
+        String val = lit.substring(1, lit.length()-1);
+        transformedCodeList.add(
+            new TransformedCode(lit, lit)
+        );
+        return val;
     }
 
     @Override
     public Object visitBooleanLiteral(BooleanLiteralContext ctx) {
-        String boolText = ctx.BOOLEAN_LITERAL().getText();
-        return boolText.equals("verdadero");
+        String lit = ctx.BOOLEAN_LITERAL().getText();
+        boolean val = "verdadero".equals(lit);
+        String py = val ? "True" : "False";
+        String js = val ? "true" : "false";
+        transformedCodeList.add(
+            new TransformedCode(py, js)
+        );
+        return val;
     }
 
     @Override
-    public CodeGenResult visitPrint(manbelParser.PrintContext ctx) {
-        Object value = visit(ctx.expr());
-        // Agrega al StringBuilder en lugar de imprimir
-        output.append(value)                
-            .append(System.lineSeparator());  // salto de línea
+    public Object visitPrint(PrintContext ctx) {
+        // --- Semántica como antes ---
+        Object val = visit(ctx.expr());
+        output.append(val).append(System.lineSeparator());
+
+        // --- Codegen ÚNICO por instrucción ---
+        CodeGenResult cg = CodeGenHelper.gen(ctx.expr());
+        transformedCodeList.add(new TransformedCode(
+            "print(" + cg.py + ")",
+            "console.log(" + cg.js + ");"
+        ));
         return null;
     }
 
     @Override
     public Object visitUnaryOpNot(UnaryOpNotContext ctx) {
         Object value = visit(ctx.expr());
-
         if (!(value instanceof Boolean)) {
-            throw new RuntimeException("El operador 'not' requiere un valor booleano");
+            throw new RuntimeException("El operador 'not' requiere booleano");
         }
+        boolean result = !(Boolean) value;
 
-        return !(Boolean) value;
+        CodeGenResult exprCg = CodeGenHelper.gen(ctx.expr());
+        transformedCodeList.add(
+            new TransformedCode(
+                "not " + exprCg.py,
+                "!" + exprCg.js
+            )
+        );
+        return result;
     }
+
+    @Override
+    public Object visitParens(ParensContext ctx) {
+        // semántica
+        Object value = visit(ctx.expr());
+        // codegen
+        CodeGenResult cg = CodeGenHelper.gen(ctx.expr());
+        transformedCodeList.add(
+            new TransformedCode(
+                "(" + cg.py + ")",
+                "(" + cg.js + ")"
+            )
+        );
+        return value;
+    }
+
 
     private Object getDefaultValue(TypeSystem type) {
         switch(type) {
@@ -226,5 +327,77 @@ public class manbelCustomVisitor extends manbelBaseVisitor<Object> {
             tabla.put(name, type + " = " + symbolValues.get(name));
         });
         return tabla;
+    }
+
+
+    private static class CodeGenHelper {
+        public static CodeGenResult gen(ExprContext ctx) {
+            if (ctx instanceof NumeroContext) {
+                String t = ((NumeroContext) ctx).NUM().getText();
+                return new CodeGenResult(t, t);
+            } else if (ctx instanceof StringLiteralContext) {
+                String lit = ((StringLiteralContext) ctx).STRING_LITERAL().getText();
+                return new CodeGenResult(lit, lit);
+            } else if (ctx instanceof BooleanLiteralContext) {
+                String lit = ((BooleanLiteralContext) ctx).BOOLEAN_LITERAL().getText();
+                String py = "verdadero".equals(lit) ? "True" : "False";
+                String js = "verdadero".equals(lit) ? "true" : "false";
+                return new CodeGenResult(py, js);
+            } else if (ctx instanceof VariableContext) {
+                String name = ((VariableContext) ctx).ID().getText();
+                return new CodeGenResult(name, name);
+            } else if (ctx instanceof ParensContext) {
+                CodeGenResult inner = gen(((ParensContext) ctx).expr());
+                return new CodeGenResult("(" + inner.py + ")", "(" + inner.js + ")");
+            } else if (ctx instanceof BinOpAddSubContext) {
+                BinOpAddSubContext b = (BinOpAddSubContext) ctx;
+                CodeGenResult l = gen(b.expr(0));
+                CodeGenResult r = gen(b.expr(1));
+                String op = b.op.getText();
+                return new CodeGenResult(l.py + " " + op + " " + r.py,
+                                         l.js + " " + op + " " + r.js);
+            } else if (ctx instanceof BinOpMulDivContext) {
+                BinOpMulDivContext b = (BinOpMulDivContext) ctx;
+                CodeGenResult l = gen(b.expr(0));
+                CodeGenResult r = gen(b.expr(1));
+                String op = b.op.getText();
+                return new CodeGenResult(l.py + " " + op + " " + r.py,
+                                         l.js + " " + op + " " + r.js);
+            } else if (ctx instanceof BinOpLogicalContext) {
+                BinOpLogicalContext b = (BinOpLogicalContext) ctx;
+                CodeGenResult l = gen(b.expr(0));
+                CodeGenResult r = gen(b.expr(1));
+                String pyOp = b.op.getText();
+                String jsOp = "and".equals(pyOp) ? "&&" : "||";
+                return new CodeGenResult(l.py + " " + pyOp + " " + r.py,
+                                         l.js + " " + jsOp + " " + r.js);
+            } else if (ctx instanceof UnaryOpNotContext) {
+                CodeGenResult inner = gen(((UnaryOpNotContext) ctx).expr());
+                return new CodeGenResult("not " + inner.py, "!" + inner.js);
+            } else {
+                throw new UnsupportedOperationException(
+                    "CodeGen not implemented for " + ctx.getClass().getSimpleName()
+                );
+            }
+        }
+
+        public static String defaultValuePy(TypeSystem t) {
+            switch (t) {
+                case ENTERO:   return "0";
+                case FLOTANTE: return "0.0";
+                case BOLEANO:  return "False";
+                case CADENA:   return "\"\"";
+                default:       return "";
+            }
+        }
+        public static String defaultValueJs(TypeSystem t) {
+            switch (t) {
+                case ENTERO:   return "0";
+                case FLOTANTE: return "0.0";
+                case BOLEANO:  return "false";
+                case CADENA:   return "\'\'";
+                default:       return "";
+            }
+        }
     }
 }

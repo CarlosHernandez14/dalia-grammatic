@@ -15,15 +15,14 @@ public class Main {
     private static final String DIRBASE = "src/test/resources/";
 
     public static void main(String[] args) throws IOException {
-        String files[] = args.length == 0 ? new String[]{"test." + EXTENSION} : args;
+        String files[] = args.length == 0 ? new String[]{DIRBASE + "test." + EXTENSION} : args;
 
         for (String file : files) {
             try {
                 // Leer contenido del archivo
-                String fileContent = String.join("\n", Files.readAllLines(Paths.get(DIRBASE + file)));
 
                 // Configurar parser
-                CharStream input = CharStreams.fromString(fileContent);
+                CharStream input = CharStreams.fromFileName(file);
                 manbelLexer lexer = new manbelLexer(input);
                 CommonTokenStream tokens = new CommonTokenStream(lexer);
                 manbelParser parser = new manbelParser(tokens);
